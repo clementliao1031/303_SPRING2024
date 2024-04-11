@@ -1,39 +1,41 @@
 import wikipedia
+from concurrent.futures import ThreadPoolExecutor
 import time
-topics = wikipedia.search("generative artificial intelligence")
 
-print("Topics related to 'generative artificial intelligence':")
-for topic in topics:
-    print(f"Title: {page_title}")
-    print("References:")
-    for reference in page_references:
-        print(reference)
-    print()
+def download_and_save_sequentially():
+    start_time = time.perf_counter()
+    topics = wikipedia.search("generative artificial intelligence")
+    for topic in topics:
+        try:
+            page = wikipedia.page(topic, auto_suggest=False)
+            references = page.references
+            file_name = topic.replace("/", "_") + ".txt"
 
-start_time = time.perf_counter()
-myfunc1()
-end_time = time.perf_counter()
-lapsed1 = end_time - start_time
+            with open(file_name, 'w', encoding='utf-8') as file:
+                for reference in references:
+                    file.write(reference + "\n")
+        except Exception as e:
+            print(f"An error occurred with {topic}: {e}")
 
-urls = ["https://en.wikipedia.org/wiki/Generative_artificial_intelligence",
-        "https://en.wikipedia.org/wiki/Artificial_general_intelligence",
-        "https://en.wikipedia.org/wiki/Music_and_artificial_intelligence"]
+elapsed_time = time.perf_counter() - start_time
+print(f"Time taken for sequential download: {elapsed_time:.2f} seconds.")
+def wiki_dl_and_save(topic):
+    try:
+        page = wikipedia.page(topic, auto_suggest=False)
+        references = page.references
+        file_name = topic.replace("/", "_") + ".txt"
+        with open(file_name, 'w', encoding='utf-8') as file:
+            for reference in references:
+                file.write(reference + "\n")
+    except Exception as e:
+        print(f"An error occurred with {topic}: {e}")
 
-def multithread():
-  
-  def url_download(url):
-    page = requests.get(url)
-    html_content = page.text
-    html_content.encode('utf-8')
-    out_filename = url.split("wiki/")[1] + ".txt"
-    print(f'output filename: {out_filename}')
-    with open(out_filename, 'wt', encoding='utf-8') as fileobj:
-      fileobj.write(html_content)
-
-  # configure the TPE to loop through urls concurrently
-  with ThreadPoolExecutor() as executor:
-    executor.map(url_download, urls)
-
-# use name == main idiom to execute the following when run directly (not imported)
+def download_and_save_concurrently():
+    start_time = time.perf_counter()
+    topics = wikipedia.search("generative artificial intelligence")
+    with ThreadPoolExecutor() as executor:
+        executor.map(wiki_dl_and_save, topics)
+    elapsed_time = time.perf_counter() - start_time
+    print(f"Time taken for concurrent download: {elapsed_time:.2f} seconds.")
 if __name__ == "__main__":
-  multithread()
+    download_and_save_sequentially()
